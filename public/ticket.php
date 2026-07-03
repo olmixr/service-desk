@@ -8,6 +8,27 @@ function e(string $value): string
 
 $id = $_GET['id'] ?? '';
 
+$allowedStatuses = ['new', 'in_progress', 'done', 'rejected'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $status = $_POST['status'] ?? '';
+
+    if (in_array($status, $allowedStatuses, true)) {
+            $updateStatement = $pdo->prepare(    
+                'UPDATE tickets SET status = :status WHERE id = :id'
+            );
+
+            $updateStatement->execute([
+                'status' => $status,
+                'id' => $id,
+            ]);
+    }
+
+    header('Location: ticket.php?id=' . urlencode($id));
+    exit;
+}
+
+
 $sql = "
     SELECT
         tickets.id,
@@ -53,6 +74,21 @@ if ($ticket === false) {
 <p>Пользователь: <?= e($ticket['user_name']) ?></p>
 <p>Категория: <?= e($ticket['category_name']) ?></p>
 <p>Статус: <?= e($ticket['status']) ?></p>
+
+<form method="post" action="ticket.php?id=<?= e((string) $ticket['id']) ?>">
+    <label for="status">Изменить статус</label>
+    <select id="status" name="status">
+        <?php foreach ($allowedStatuses as $status): ?>
+            <option value="<?= e($status) ?>" <?= $ticket['status'] === $status ? 'selected' : '' ?>>
+                <?= e($status) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+
+    <button type="submit">Сохранить</button>
+</form>
+
+
 <p>Дата: <?= e($ticket['created_at']) ?></p>
 <p>Описание: <?= e($ticket['description']) ?></p>
 
