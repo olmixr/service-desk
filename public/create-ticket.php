@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div> 
     <label for="subject">Тема</label><br>
-<input id="subject"  name="subject" type="text" placeholder="Кратко опишите проблему"><br>
+<input id="subject"  name="subject" type="text" placeholder="Кратко опишите проблему" value="<?= e($subject) ?>"><br>
 </div>
 
 <div>
