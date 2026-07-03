@@ -31,9 +31,9 @@ CREATE TABLE IF NOT EXISTS tickets (
 );
 
 INSERT IGNORE INTO users (name, email, password, role) VALUES
-    ('Admin', 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llCqjYD/fFQ/atKxSSZG', 'admin'),
-    ('Ivan', 'ivan@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llCqjYD/fFQ/atKxSSZG', 'user'),
-    ('Anna', 'anna@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llCqjYD/fFQ/atKxSSZG', 'user');
+    ('Admin', 'admin@example.com', '$2y$10$zFWSdfpdj4u.YXoS598J0uBN0KmA.60n/anTsIZaH4VMDdGoKdbLW', 'admin'),
+    ('Ivan', 'ivan@example.com', '$2y$10$zFWSdfpdj4u.YXoS598J0uBN0KmA.60n/anTsIZaH4VMDdGoKdbLW', 'user'),
+    ('Anna', 'anna@example.com', '$2y$10$zFWSdfpdj4u.YXoS598J0uBN0KmA.60n/anTsIZaH4VMDdGoKdbLW', 'user');
 
 INSERT IGNORE INTO categories (name) VALUES
     ('Почта'),
