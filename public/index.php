@@ -33,6 +33,7 @@ function e(string $value): string
     <title>Service Desk</title>
 </head>
 <body>
+<h1><a href="create-ticket.php">перейти на страницу создания заявки</a></h1>
 
 <h1>Все заявки</h1>
 
