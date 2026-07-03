@@ -52,7 +52,11 @@ function e(string $value): string
     <tbody>
     <?php foreach ($tickets as $ticket): ?>
         <tr>
-            <td><?= e((string) $ticket['id']) ?></td>
+        <td>
+             <a href="ticket.php?id=<?= e((string) $ticket['id']) ?>">
+             <?= e((string) $ticket['id']) ?>
+                </a>
+        </td>
             <td><?= e($ticket['subject']) ?></td>
             <td><?= e($ticket['user_name']) ?></td>
             <td><?= e($ticket['category_name']) ?></td>
