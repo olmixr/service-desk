@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 require_once __DIR__ . '/../config/database.php';
 
 $sql = "
@@ -33,6 +33,20 @@ function e(string $value): string
     <title>Service Desk</title>
 </head>
 <body>
+
+<?php if (isset($_SESSION['user_id'])): ?>
+    <p>
+        Вы вошли как <?= e($_SESSION['user_name']) ?>
+        (<?= e($_SESSION['user_role']) ?>)
+        <a href="logout.php">Выйти</a>
+    </p>
+<?php else: ?>
+    <p>
+        <a href="login.php">Войти</a>
+    </p>
+<?php endif; ?>
+
+
 <h1><a href="create-ticket.php">перейти на страницу создания заявки</a></h1>
 
 <h1>Все заявки</h1>
