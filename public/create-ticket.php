@@ -1,5 +1,13 @@
 <?php
+session_start();
+
 require_once __DIR__ . '/../config/database.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
 $errors = [];
 
 $subject = '';
@@ -30,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
     if ($errors === []) {
-    $userId = 2;
+    $userId = $_SESSION['user_id'];
 
     $statement = $pdo->prepare(
         'INSERT INTO tickets (user_id, category_id, subject, description)
