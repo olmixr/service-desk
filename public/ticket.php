@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once __DIR__ . '/../config/database.php';
 
 function e(string $value): string
@@ -10,7 +11,9 @@ $id = $_GET['id'] ?? '';
 
 $allowedStatuses = ['new', 'in_progress', 'done', 'rejected'];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+$isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isAdmin) {
     $status = $_POST['status'] ?? '';
 
     if (in_array($status, $allowedStatuses, true)) {
@@ -74,8 +77,8 @@ if ($ticket === false) {
 <p>Пользователь: <?= e($ticket['user_name']) ?></p>
 <p>Категория: <?= e($ticket['category_name']) ?></p>
 <p>Статус: <?= e($ticket['status']) ?></p>
-
-<form method="post" action="ticket.php?id=<?= e((string) $ticket['id']) ?>">
+<?php if ($isAdmin): ?>
+    <form method="post" action="ticket.php?id=<?= e((string) $ticket['id']) ?>">
     <label for="status">Изменить статус</label>
     <select id="status" name="status">
         <?php foreach ($allowedStatuses as $status): ?>
@@ -87,7 +90,7 @@ if ($ticket === false) {
 
     <button type="submit">Сохранить</button>
 </form>
-
+<?php endif; ?>
 
 <p>Дата: <?= e($ticket['created_at']) ?></p>
 <p>Описание: <?= e($ticket['description']) ?></p>
