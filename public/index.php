@@ -47,8 +47,8 @@ function e(string $value): string
 <?php endif; ?>
 
 
-<h1><a href="create-ticket.php">перейти на страницу создания заявки</a></h1>
-
+<h1><a href="create-ticket.php">Создать заявку</a></h1>
+<h3><a href="my-tickets.php">Мои заявки</a></h3>
 <h1>Все заявки</h1>
 
 <table border="1" cellpadding="8">
