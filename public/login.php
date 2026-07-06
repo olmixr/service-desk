@@ -52,12 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html>
-<head>
+    <head>
+            <title>Login</title>
+            <link rel="stylesheet" href="css/style.css">
+    </head>
 
-</head>
 
+<body class="auth-page">
+    <main class="auth-card">
 
-<body>
+    <img class="img-login" src="img/support.png">
 <h1>Добро пожаловать!</h1>
 <h4>Войдите в свой аккаунт</h4>
 
@@ -69,21 +73,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </ul>
 <?php endif; ?>
 <form method="post" action="login.php">
-   <div>
+   
     <label>Email</label><br>
-    <input name="email" type="email" placeholder="you@example.com" value="<?= e($email) ?>">
+    <input name="email" type="email" placeholder="you@example.com" value="<?= e($email) ?>"><br><br>
 
-</div>
+
 
     <label>Password</label><br>
-    <input name="password" type="password" placeholder="Введите пароль" ><br>
+    <input name="password" type="password" placeholder="Введите пароль" ><br><br><br>
 
-    <button type="submit">Войти</button>
+    <button class="button-login" type="submit">Войти</button>
     <hr>
-    <h3><a href="registration.php">Зарегистрироваться</a></h3>        
-
+    <h3>Нет аккаунт? <a href="registration.php">Зарегистрироваться</a></h3>        
+         </main>
 </form>
-
+</div>
 
 </body>
 
