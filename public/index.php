@@ -31,6 +31,7 @@ function e(string $value): string
 <head>
     <meta charset="UTF-8">
     <title>Service Desk</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
@@ -51,7 +52,7 @@ function e(string $value): string
 <h3><a href="my-tickets.php">Мои заявки</a></h3>
 <h1>Все заявки</h1>
 
-<table border="1" cellpadding="8">
+<table>
     <thead>
     <tr>
         <th>ID</th>
