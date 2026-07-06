@@ -35,21 +35,29 @@ function e(string $value): string
 </head>
 <body>
 
-<?php if (isset($_SESSION['user_id'])): ?>
-    <p>
-        Вы вошли как <?= e($_SESSION['user_name']) ?>
-        (<?= e($_SESSION['user_role']) ?>)
-        <a href="logout.php">Выйти</a>
-    </p>
-<?php else: ?>
-    <p>
-        <a href="login.php">Войти</a>
-    </p>
-<?php endif; ?>
+<header class="topbar">
+    <div>
+        <strong>Service Desk</strong>
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <span class="user-info">
+                <?= e($_SESSION['user_name']) ?> (<?= e($_SESSION['user_role']) ?>)
+            </span>
+        <?php endif; ?>
+    </div>
 
+    <nav class="nav-links">
+        <a href="index.php">Все заявки</a>
+        <a href="my-tickets.php">Мои заявки</a>
+        <a href="create-ticket.php">Создать заявку</a>
 
-<h1><a href="create-ticket.php">Создать заявку</a></h1>
-<h3><a href="my-tickets.php">Мои заявки</a></h3>
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <a href="logout.php">Выйти</a>
+        <?php else: ?>
+            <a href="login.php">Войти</a>
+        <?php endif; ?>
+    </nav>
+</header>
+
 <h1>Все заявки</h1>
 
 <table>

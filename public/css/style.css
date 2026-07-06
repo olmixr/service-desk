@@ -56,3 +56,25 @@ th {
 tr:hover td {
     background: #f8fbff;
 }
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding: 16px 20px;
+    background: #ffffff;
+    border: 1px solid #d8e0ec;
+}
+
+.user-info {
+    margin-left: 12px;
+    color: #667085;
+}
+
+.nav-links {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
