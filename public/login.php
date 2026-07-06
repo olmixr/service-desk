@@ -79,6 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <input name="password" type="password" placeholder="Введите пароль" ><br>
 
     <button type="submit">Войти</button>
+    <hr>
+    <h3><a href="registration.php">Зарегистрироваться</a></h3>        
 
 </form>
 
