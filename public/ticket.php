@@ -95,7 +95,7 @@ if ($ticket === false) {
 <p>Дата: <?= e($ticket['created_at']) ?></p>
 <p>Описание: <?= e($ticket['description']) ?></p>
 
-<p><a href="index.php">Назад к списку</a></p>
+<p><a href="javascript:history.back()">Назад к списку</a></p>
 
 </body>
 </html>
