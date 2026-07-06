@@ -58,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 <body>
+<h1>Добро пожаловать!</h1>
+<h4>Войдите в свой аккаунт</h4>
+
     <?php if ($errors !== []): ?>
     <ul>
         <?php foreach ($errors as $error): ?>
@@ -67,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php endif; ?>
 <form method="post" action="login.php">
    <div>
-    <label>Login</label><br>
+    <label>Email</label><br>
     <input name="email" type="email" placeholder="you@example.com" value="<?= e($email) ?>">
 
 </div>

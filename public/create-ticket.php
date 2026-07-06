@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 </form>
 <p>
-   <a href="index.php">Назад к списку</a>
+   <a href="my-tickets.php">Назад к списку</a>
 </p>
 
 
