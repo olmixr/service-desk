@@ -1,6 +1,14 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config/database.php';
+    if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+    if($_SESSION['user_role'] !== 'admin'){
+        header('Location: my-tickets.php');
+    }
 
 $sql = "
     SELECT
