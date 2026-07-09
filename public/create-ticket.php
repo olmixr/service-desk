@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'description' => $description,
     ]);
 
-    header('Location: index.php');
+    header('Location: my-tickets.php');
     exit;
 }
 
@@ -68,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <title>Создать заявку</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 
 
@@ -106,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 <button type="submit">Отправить заявку</button>
 
-</form>
+</form><br>
 <p>
    <a href="my-tickets.php">Назад к списку</a>
 </p>

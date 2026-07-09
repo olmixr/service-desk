@@ -4,7 +4,7 @@
 
 body {
     margin: 0;
-    padding: 32px;
+    /* padding: 32px; */
     font-family: Arial, sans-serif;
     background: #f4f7fb;
     color: #172033;
@@ -84,6 +84,7 @@ form {
     padding: 20px;
     background: #ffffff;
     border: 1px solid #d8e0ec;
+    border-radius: 25px;
 }
 
 form div {
@@ -154,7 +155,7 @@ ul {
         radial-gradient(circle at 88% 70%, rgba(31, 111, 235, 0.10) 0 120px, transparent 122px),
         radial-gradient(circle at 15% 50%, rgba(255, 99, 132, 0.5) 0%, transparent 50%),
         radial-gradient(circle at 85% 30%, rgba(54, 162, 235, 0.5) 0%, transparent 60%),
-        radial-gradient(circle at 50% 80%, rgba(255, 205, 86, 0.5) 0%, transparent 50%);
+        radial-gradient(circle at 50% 80%, rgba(255, 205, 86, 0.5) 0%, transparent 50%),
         linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
 }
 
@@ -200,3 +201,129 @@ ul {
   max-width: 30%;
 }
 
+.dashboard-layout {
+    margin: 0 0 0 0;
+    display: flex;
+    min-height: 100vh;
+    /* outline: 2px solid red; */
+
+}
+
+.sidebar {
+    width: 280px;
+    background: #ffffff;
+    border-right: 1px solid #dbe3f0;
+    padding: 28px 18px;
+    /* outline: 2px solid blue; */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-title {
+    margin: 0 0 24px;
+    font-size: 24px;
+    color: #071b44;
+}
+
+.dashboard-content {
+    flex: 1;
+    padding: 32px;
+}
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    padding: 12px 14px;
+    color: #1f2a44;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+    background: #eef5ff;
+    color: #1f6feb;
+    text-decoration: none;
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0 6px;
+}
+
+.sidebar-user strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #071b44;
+}
+
+.sidebar-user p {
+    margin: 0;
+    color: #667085;
+    font-size: 14px;
+}
+
+.sidebar-user img {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    transform: none;
+    object-fit: cover;
+}
+
+.mylog{
+    margin-top: auto;
+    margin-bottom: 18px;
+}
+
+.cabinet-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 12px;
+    align-items: start;
+}
+
+.cabinet-left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ticket-preview {
+    background: #ffffff;
+    border: 1px solid #d8e0ec;
+    border-radius: 25px;
+    padding: 20px;
+}
+.cabinet-down {
+   background: #ffffff;
+    border: 1px solid #d8e0ec;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.dashboard-content form {
+    max-width: none;
+    border-radius: 12px;
+    padding: 16px;
+}
+.dashboard-content textarea {
+    min-height: 70px;
+}
+.cabinet-card {
+    background: #ffffff;
+    border: 1px solid #d8e0ec;
+    border-radius: 12px;
+    padding: 16px;
+}

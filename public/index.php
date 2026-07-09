@@ -8,6 +8,7 @@ require_once __DIR__ . '/../config/database.php';
 
     if($_SESSION['user_role'] !== 'admin'){
         header('Location: my-tickets.php');
+        exit;
     }
 
 $sql = "
