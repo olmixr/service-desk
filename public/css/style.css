@@ -327,3 +327,33 @@ ul {
     border-radius: 12px;
     padding: 16px;
 }
+
+.comment {
+    margin-bottom: 10px;
+    padding: 12px;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.comment-header span {
+    color: #667085;
+    font-size: 12px;
+}
+.sentComment{
+    background: #ffffff;
+    border: 0;
+    border-radius: 0px;
+    padding: 0px;
+     display: flex; /* Включаем Flexbox */
+    gap: 10px; /* Расстояние между инпутом и кнопкой */
+    max-width: 400px;
+     width: 350px;
+}
+.sentComment textarea {
+    min-height: 42px;
+    resize: none;
+}

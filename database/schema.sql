@@ -79,3 +79,16 @@ UPDATE tickets
 SET user_id = (SELECT id FROM users WHERE email = 'anna@example.com' LIMIT 1),
     category_id = (SELECT id FROM categories WHERE name = 'Оборудование' LIMIT 1)
 WHERE subject = 'Не работает принтер';
+
+CREATE TABLE IF NOT EXISTS ticket_comments (
+	 id INT AUTO_INCREMENT PRIMARY KEY,
+     ticket_id INT NOT NULL,
+    user_id INT NOT NULL,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES tickets(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+INSERT INTO ticket_comments (ticket_id, user_id, comment)
+VALUES (14, 2, 'Тестовый комментарий');
+

@@ -75,8 +75,71 @@ $statement->execute([
 ]);
 
 $tickets = $statement->fetchAll();
+
+ 
+
 $selectedTicket = $tickets[0] ?? null;
 $selectedTicketId = $_GET['ticket_id'] ?? '';
+$comments = [];
+
+foreach ($tickets as $ticket) {
+                if ((string) $ticket['id'] === $selectedTicketId) {
+                    $selectedTicket = $ticket;
+                    break;
+                }}
+
+if($selectedTicket !== null){
+    $sqlComment = "
+        SELECT
+            ticket_comments.comment,
+            ticket_comments.created_at,
+            users.name AS user_name,
+            users.role AS user_role
+        FROM ticket_comments
+        INNER JOIN users ON ticket_comments.user_id = users.id
+        WHERE ticket_comments.ticket_id = :ticket_id
+        ORDER BY ticket_comments.created_at ASC
+    ";
+    $statement = $pdo->prepare($sqlComment);
+    
+    $statement->execute([
+    'ticket_id' => $selectedTicket['id'],
+    
+]);
+
+    $comments = $statement->fetchAll();
+
+}
+$errorsMessage = [];
+$message = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $message = trim($_POST['message'] ?? '');
+
+    if($message === ''){
+        $errorsMessage[] = 'Введите описание заявки.';
+    }
+
+
+    if ($errorsMessage === []) {
+    $userId = $_SESSION['user_id'];
+
+    $statement = $pdo->prepare(
+        'INSERT INTO ticket_comments (ticket_id, user_id, comment)
+         VALUES (:ticket_id, :user_id, :comment)'
+
+    );
+
+    $statement->execute([
+        'ticket_id'=> $selectedTicket['id'],
+        'user_id' => $_SESSION['user_id'],
+        'comment' => $message
+    ]);
+    header('Location: my-tickets.php?ticket_id='. $selectedTicket['id']);
+        exit;
+}
+
+}
+
 
 ?>
 <!DOCTYPE html>
@@ -202,15 +265,7 @@ $selectedTicketId = $_GET['ticket_id'] ?? '';
                     <!-- правая карточка завки -->
 
 
-                <?php $selectedTicketId = $_GET['ticket_id'] ?? '';
-
-            foreach ($tickets as $ticket) {
-                if ((string) $ticket['id'] === $selectedTicketId) {
-                    $selectedTicket = $ticket;
-                    break;
-                }
-} ?>
-
+                
 <?php if ($selectedTicket !== null): ?>
     <h1>Заявка #<?= e((string) $selectedTicket['id']) ?></h1>
 
@@ -227,6 +282,38 @@ $selectedTicketId = $_GET['ticket_id'] ?? '';
 <?php endif; ?>
 
 
+<!-- НИЖНИЯ ЧАСТЬ ЗАВКИ СПРАВА ЧАТ -->
+
+<hr>
+<h2>Чат поддержки</h2>
+
+    <?php if($comments == null): ?>
+        <p>Комментариев пока нет.</p>
+    <?php else: ?>    
+        <?php foreach ($comments as $comment): ?>
+           <?php if($comment['user_role'] === 'admin'){
+            $author = 'Служба поддержки';
+            }
+            else
+            {$author = $comment['user_name'];}?>
+                        
+                            <a href="my-tickets.php?ticket_id=<?= e((string) $ticket['id']) ?>"></a>
+                   <div class="comment">
+                      <div class="comment-header">
+                        <p><?= e($author) ?></p>
+                        <p><?= e($comment['created_at']) ?></p>
+                           </div>
+
+                         <p><?= e($comment['comment']) ?></p>
+                    </div>
+                    
+                <?php endforeach; ?>
+<?php endif; ?>
+
+             <form class="sentComment" method="post" action="my-tickets.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>">
+                        <textarea id="message" name="message" placeholder="Написать службе поддержки..."><?= e($message) ?></textarea><br>
+                            <button type="submit">Отправить</button>
+                            </form>
             </aside>
 
 
