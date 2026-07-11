@@ -294,6 +294,13 @@ ul {
     align-items: start;
 }
 
+.admin-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 16px;
+    align-items: start;
+}
+
 .cabinet-left {
     display: flex;
     flex-direction: column;
@@ -356,4 +363,17 @@ ul {
 .sentComment textarea {
     min-height: 42px;
     resize: none;
+}
+.changeStatus{
+    all: unset;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px; 
+}
+.comments-list {
+     height: 360px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
