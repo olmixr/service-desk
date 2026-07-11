@@ -17,8 +17,9 @@ $errors = [];
 $subject = '';
 $categoryId = '';
 $description = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+$formType = $_POST['form_type'] ?? '';
+if ($formType === 'add_ticket') {
+    
     $subject = trim($_POST['subject'] ?? '');
     $categoryId = $_POST['category_id'] ?? '';
     $description = trim($_POST['description'] ?? '');
@@ -112,7 +113,7 @@ if($selectedTicket !== null){
 }
 $errorsMessage = [];
 $message = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($formType === 'add_comment') {
     $message = trim($_POST['message'] ?? '');
 
     if($message === ''){
@@ -165,8 +166,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <nav class="sidebar-nav">
             <a class="sidebar-link active" href="my-tickets.php">Главная</a>
-            <a class="sidebar-link" href="create-ticket.php">Создать заявку</a>
-            <a class="sidebar-link" href=".php">Мои заявки</a>
         </nav>
 
         <a class="sidebar-link mylog" href="logout.php">Выйти</a>
@@ -188,6 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="post" action="my-tickets.php">
+             <input type="hidden" name="form_type" value="add_ticket">
                 <div>
                     <label for="subject">Тема</label>
                     <input
@@ -311,6 +311,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php endif; ?>
 
              <form class="sentComment" method="post" action="my-tickets.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>">
+                 <input type="hidden" name="form_type" value="add_comment">
                         <textarea id="message" name="message" placeholder="Написать службе поддержки..."><?= e($message) ?></textarea><br>
                             <button type="submit">Отправить</button>
                             </form>
