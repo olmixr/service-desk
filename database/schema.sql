@@ -89,6 +89,4 @@ CREATE TABLE IF NOT EXISTS ticket_comments (
     FOREIGN KEY (ticket_id) REFERENCES tickets(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
-INSERT INTO ticket_comments (ticket_id, user_id, comment)
-VALUES (14, 2, 'Тестовый комментарий');
 
