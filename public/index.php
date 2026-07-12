@@ -28,36 +28,78 @@ $sql = "
 
 $statement = $pdo->query($sql);
 $tickets = $statement->fetchAll();
-$selectedTicket = $tickets[0] ?? null;
-$selectedTicketId = $_GET['ticket_id'] ?? '';
+$selectedTicket = null;
+$selectedTicketError = '';
+$selectedTicketId = 0;
 $comments = [];
+$errorsMessage = [];
 $message = '';
+$formType = $_POST['form_type'] ?? '';
 
-foreach ($tickets as $ticket) {
-    if ((string) $ticket['id'] === $selectedTicketId) {
-        $selectedTicket = $ticket;
-        break;
+if ($formType === 'add_comment') {
+    $rawTicketId = $_POST['ticket_id'] ?? '';
+} else {
+    $rawTicketId = $_GET['ticket_id'] ?? null;
+}
+
+if ($rawTicketId === null) {
+    if ($tickets !== []) {
+        $selectedTicketId = (int) $tickets[0]['id'];
+    }
+} elseif (is_string($rawTicketId) && ctype_digit($rawTicketId) && (int) $rawTicketId > 0) {
+    $selectedTicketId = (int) $rawTicketId;
+} else {
+    $selectedTicketError = 'Некорректный номер заявки.';
+}
+
+if ($selectedTicketId > 0 && $selectedTicketError === '') {
+    $selectedTicketSql = "
+        SELECT
+            tickets.id,
+            tickets.subject,
+            tickets.description,
+            tickets.status,
+            tickets.created_at,
+            users.name AS user_name,
+            categories.name AS category_name
+        FROM tickets
+        INNER JOIN users ON tickets.user_id = users.id
+        INNER JOIN categories ON tickets.category_id = categories.id
+        WHERE tickets.id = :ticket_id
+    ";
+
+    $selectedTicketStatement = $pdo->prepare($selectedTicketSql);
+    $selectedTicketStatement->execute([
+        'ticket_id' => $selectedTicketId,
+    ]);
+
+    $selectedTicket = $selectedTicketStatement->fetch();
+
+    if ($selectedTicket === false) {
+        $selectedTicket = null;
+        $selectedTicketError = 'Заявка не найдена или недоступна.';
     }
 }
 
 if ($selectedTicket !== null) {
-    $commentStatement = $pdo->prepare(
-        "SELECT
+    $sqlComment = "
+        SELECT
             ticket_comments.comment,
             ticket_comments.created_at,
             users.name AS user_name,
             users.role AS user_role
-         FROM ticket_comments
-         INNER JOIN users ON ticket_comments.user_id = users.id
-         WHERE ticket_comments.ticket_id = :ticket_id
-         ORDER BY ticket_comments.created_at ASC"
-    );
+        FROM ticket_comments
+        INNER JOIN users ON ticket_comments.user_id = users.id
+        WHERE ticket_comments.ticket_id = :ticket_id
+        ORDER BY ticket_comments.created_at ASC
+    ";
 
-    $commentStatement->execute([
+    $statement = $pdo->prepare($sqlComment);
+    $statement->execute([
         'ticket_id' => $selectedTicket['id'],
     ]);
 
-    $comments = $commentStatement->fetchAll();
+    $comments = $statement->fetchAll();
 }
 
 function e(string $value): string
@@ -71,8 +113,6 @@ $id = $_GET['id'] ?? '';
 $allowedStatuses = ['new', 'in_progress', 'done', 'rejected'];
 
 $isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
-
-$formType = $_POST['form_type'] ?? '';
 
 if ($formType === 'change_status' && $isAdmin) {
     $status = $_POST['status'] ?? '';
@@ -94,34 +134,32 @@ if ($formType === 'change_status' && $isAdmin) {
 
 
 
-$errorsMessage = [];
-$message = '';
 if ($formType === 'add_comment') {
     $message = trim($_POST['message'] ?? '');
 
-    if($message === ''){
-        $errorsMessage[] = 'Введите описание заявки.';
+    if ($selectedTicket === null) {
+        $errorsMessage[] = 'Заявка не найдена или недоступна.';
     }
 
+    if ($message === '') {
+        $errorsMessage[] = 'Введите комментарий.';
+    }
 
     if ($errorsMessage === []) {
-    $userId = $_SESSION['user_id'];
+        $statement = $pdo->prepare(
+            'INSERT INTO ticket_comments (ticket_id, user_id, comment)
+             VALUES (:ticket_id, :user_id, :comment)'
+        );
 
-    $statement = $pdo->prepare(
-        'INSERT INTO ticket_comments (ticket_id, user_id, comment)
-         VALUES (:ticket_id, :user_id, :comment)'
+        $statement->execute([
+            'ticket_id' => $selectedTicket['id'],
+            'user_id' => $_SESSION['user_id'],
+            'comment' => $message,
+        ]);
 
-    );
-
-    $statement->execute([
-        'ticket_id'=> $selectedTicket['id'],
-        'user_id' => $_SESSION['user_id'],
-        'comment' => $message
-    ]);
-    header('Location: index.php?ticket_id='. $selectedTicket['id']);
+        header('Location: index.php?ticket_id=' . $selectedTicket['id']);
         exit;
-}
-
+    }
 }
 
 
@@ -213,57 +251,66 @@ if ($formType === 'add_comment') {
 
 
                 
-<?php if ($selectedTicket !== null): ?>
-    <h1>Заявка #<?= e((string) $selectedTicket['id']) ?></h1>
+ <?php if ($selectedTicketError !== ''): ?>
+                    <p><?= e($selectedTicketError) ?></p>
+                <?php elseif ($selectedTicket !== null): ?>
+                    <h1>Заявка #<?= e((string) $selectedTicket['id']) ?></h1>
 
-<p>Тема: <?= e($selectedTicket['subject']) ?></p>
-<p>Пользователь: <?= e($selectedTicket['user_name']) ?></p>
-<p>Категория: <?= e($selectedTicket['category_name']) ?></p>
-<p>Статус: <?= e($selectedTicket['status']) ?></p>
-<p>Дата: <?= e($selectedTicket['created_at']) ?></p>
-<p>Описание: <?= e($selectedTicket['description']) ?></p>
+                    <p>Тема: <?= e($selectedTicket['subject']) ?></p>
+                    <p>Пользователь: <?= e($selectedTicket['user_name']) ?></p>
+                    <p>Категория: <?= e($selectedTicket['category_name']) ?></p>
+                    <p>Статус: <?= e($selectedTicket['status']) ?></p>
+                    <p>Дата: <?= e($selectedTicket['created_at']) ?></p>
+                    <p>Описание: <?= e($selectedTicket['description']) ?></p>
 
+                    <hr>
+                    <h2>Чат поддержки</h2>
 
-<?php else: ?>
-    <p>У вас пока нет заявок.</p>
-<?php endif; ?>
+                    <?php if ($comments === []): ?>
+                        <p>Комментариев пока нет.</p>
+                    <?php else: ?>
+                        <?php foreach ($comments as $comment): ?>
+                            <?php
+                            $author = $comment['user_role'] === 'admin'
+                                ? 'Служба поддержки'
+                                : $comment['user_name'];
+                            ?>
+                            <div class="comment">
+                                <div class="comment-header">
+                                    <p><?= e($author) ?></p>
+                                    <p><?= e($comment['created_at']) ?></p>
+                                </div>
 
+                                <p><?= e($comment['comment']) ?></p>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
 
-<!-- НИЖНИЯ ЧАСТЬ ЗАВКИ СПРАВА ЧАТ -->
+                    <?php if ($errorsMessage !== []): ?>
+                        <ul>
+                            <?php foreach ($errorsMessage as $errorMessage): ?>
+                                <li><?= e($errorMessage) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
 
-<hr>
-<h2>Чат поддержки</h2>
-
-    <?php if($comments == null): ?>
-        <p>Комментариев пока нет.</p>
-    <?php else: ?> 
-        
-        <?php foreach ($comments as $comment): ?>
-           <?php if($comment['user_role'] === 'admin'){
-            $author = 'Служба поддержки';
-            }
-            else
-            {$author = $comment['user_name'];}?>
-                        
-                            <a href="my-tickets.php?ticket_id=<?= e((string) $ticket['id']) ?>"></a>
-                   <div class="comment">
-                      <div class="comment-header">
-                        <p><?= e($author) ?></p>
-                        <p><?= e($comment['created_at']) ?></p>
-                           </div>
-
-                         <p><?= e($comment['comment']) ?></p>
-                    </div>
-                  
-                <?php endforeach; ?>
-           
-<?php endif; ?>
- 
-             <form class="sentComment" method="post" action="index.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>">
-                <input type="hidden" name="form_type" value="add_comment">
-                        <textarea id="message" name="message" placeholder="Написать службе поддержки..."><?= e($message) ?></textarea><br>
-                            <button type="submit">Отправить</button>
-                            </form>
+                    <form
+                        class="sentComment"
+                        method="post"
+                        action="index.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>"
+                    >
+                        <input type="hidden" name="form_type" value="add_comment">
+                        <input type="hidden" name="ticket_id" value="<?= e((string) $selectedTicket['id']) ?>">
+                        <textarea
+                            id="message"
+                            name="message"
+                            placeholder="Написать службе поддержки..."
+                        ><?= e($message) ?></textarea>
+                        <button type="submit">Отправить</button>
+                    </form>
+                <?php else: ?>
+                    <p>Заявок пока нет.</p>
+                <?php endif; ?>
             </aside>
 </div>
 </main>
