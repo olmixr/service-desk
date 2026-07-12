@@ -90,3 +90,14 @@ CREATE TABLE IF NOT EXISTS ticket_comments (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+DELETE c1
+FROM categories c1
+INNER JOIN categories c2
+    ON c1.name = c2.name
+    AND c1.id > c2.id;
+    
+ALTER TABLE categories
+ADD CONSTRAINT uq_categories_name UNIQUE (name);
+
+
+

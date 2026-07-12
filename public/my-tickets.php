@@ -21,6 +21,10 @@ $description = '';
 $message = '';
 $formType = $_POST['form_type'] ?? '';
 
+
+$categories = $pdo->query('SELECT id , name FROM categories ORDER BY name')->fetchAll();
+$categoryIds = array_map('strval', array_column($categories, 'id'));
+
 if ($formType === 'add_ticket') {
     $subject = trim($_POST['subject'] ?? '');
     $categoryId = $_POST['category_id'] ?? '';
@@ -181,184 +185,179 @@ if ($formType === 'add_comment') {
 ?>
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <title>Service Desk</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-<div class="dashboard-layout">
-    <aside class="sidebar">
-        <h2 class="sidebar-title">Service Desk</h2>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <h2 class="sidebar-title">Service Desk</h2>
 
-        <div class="sidebar-user">
-            <img class="img-my-tickets" src="img/user-img.png" alt="User avatar">
+            <div class="sidebar-user">
+                <img class="img-my-tickets" src="img/user-img.png" alt="User avatar">
 
-            <div>
-                <strong><?= e($_SESSION['user_name']) ?></strong>
-                <p><?= e($_SESSION['user_email'] ?? $_SESSION['user_role']) ?></p>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a class="sidebar-link active" href="my-tickets.php">Главная</a>
-        </nav>
-
-        <a class="sidebar-link mylog" href="logout.php">Выйти</a>
-    </aside>
-
-    <main class="dashboard-content">
-        <div class="cabinet-grid">
-            <div class="cabinet-left">
-                <section>
-                    <h1>Создать заявку</h1>
-
-                    <?php if ($errors !== []): ?>
-                        <ul>
-                            <?php foreach ($errors as $error): ?>
-                                <li><?= e($error) ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
-
-                    <form method="post" action="my-tickets.php">
-                        <input type="hidden" name="form_type" value="add_ticket">
-
-                        <div>
-                            <label for="subject">Тема</label>
-                            <input
-                                id="subject"
-                                name="subject"
-                                type="text"
-                                placeholder="Кратко опишите проблему"
-                                value="<?= e($subject) ?>"
-                            >
-                        </div>
-
-                        <div>
-                            <label for="category_id">Категория</label>
-                            <select id="category_id" name="category_id">
-                                <option value="" disabled <?= $categoryId === '' ? 'selected' : '' ?>>
-                                    Выберите категорию
-                                </option>
-                                <option value="1" <?= $categoryId === '1' ? 'selected' : '' ?>>Почта</option>
-                                <option value="2" <?= $categoryId === '2' ? 'selected' : '' ?>>Авторизация</option>
-                                <option value="3" <?= $categoryId === '3' ? 'selected' : '' ?>>Оборудование</option>
-                                <option value="4" <?= $categoryId === '4' ? 'selected' : '' ?>>Приложения</option>
-                                <option value="5" <?= $categoryId === '5' ? 'selected' : '' ?>>Файлы</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="description">Описание</label>
-                            <textarea
-                                id="description"
-                                name="description"
-                                placeholder="Подробно опишите суть проблемы..."
-                            ><?= e($description) ?></textarea>
-                        </div>
-
-                        <button type="submit">Отправить заявку</button>
-                    </form>
-                </section>
-
-                <section class="cabinet-down">
-                    <h1>Мои заявки</h1>
-
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Тема</th>
-                            <th>Категория</th>
-                            <th>Статус</th>
-                            <th>Дата</th>
-                        </tr>
-                        </thead>
-
-                        <tbody>
-                        <?php foreach ($tickets as $ticket): ?>
-                            <tr>
-                                <td>
-                                    <a href="my-tickets.php?ticket_id=<?= e((string) $ticket['id']) ?>">
-                                        <?= e((string) $ticket['id']) ?>
-                                    </a>
-                                </td>
-                                <td><?= e($ticket['subject']) ?></td>
-                                <td><?= e($ticket['category_name']) ?></td>
-                                <td><?= e($ticket['status']) ?></td>
-                                <td><?= e($ticket['created_at']) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </section>
+                <div>
+                    <strong><?= e($_SESSION['user_name']) ?></strong>
+                    <p><?= e($_SESSION['user_email'] ?? $_SESSION['user_role']) ?></p>
+                </div>
             </div>
 
-            <aside class="ticket-preview">
-                <?php if ($selectedTicketError !== ''): ?>
-                    <p><?= e($selectedTicketError) ?></p>
-                <?php elseif ($selectedTicket !== null): ?>
-                    <h1>Заявка #<?= e((string) $selectedTicket['id']) ?></h1>
+            <nav class="sidebar-nav">
+                <a class="sidebar-link active" href="my-tickets.php">Главная</a>
+            </nav>
 
-                    <p>Тема: <?= e($selectedTicket['subject']) ?></p>
-                    <p>Пользователь: <?= e($selectedTicket['user_name']) ?></p>
-                    <p>Категория: <?= e($selectedTicket['category_name']) ?></p>
-                    <p>Статус: <?= e($selectedTicket['status']) ?></p>
-                    <p>Дата: <?= e($selectedTicket['created_at']) ?></p>
-                    <p>Описание: <?= e($selectedTicket['description']) ?></p>
+            <a class="sidebar-link mylog" href="logout.php">Выйти</a>
+        </aside>
 
-                    <hr>
-                    <h2>Чат поддержки</h2>
+        <main class="dashboard-content">
+            <div class="cabinet-grid">
+                <div class="cabinet-left">
+                    <section>
+                        <h1>Создать заявку</h1>
 
-                    <?php if ($comments === []): ?>
-                        <p>Комментариев пока нет.</p>
-                    <?php else: ?>
-                        <?php foreach ($comments as $comment): ?>
-                            <?php
-                            $author = $comment['user_role'] === 'admin'
-                                ? 'Служба поддержки'
-                                : $comment['user_name'];
-                            ?>
-                            <div class="comment">
-                                <div class="comment-header">
-                                    <p><?= e($author) ?></p>
-                                    <p><?= e($comment['created_at']) ?></p>
-                                </div>
+                        <?php if ($errors !== []): ?>
+                            <ul>
+                                <?php foreach ($errors as $error): ?>
+                                    <li><?= e($error) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
 
-                                <p><?= e($comment['comment']) ?></p>
+                        <form method="post" action="my-tickets.php">
+                            <input type="hidden" name="form_type" value="add_ticket">
+
+                            <div>
+                                <label for="subject">Тема</label>
+                                <input id="subject" name="subject" type="text" placeholder="Кратко опишите проблему"
+                                    value="<?= e($subject) ?>">
                             </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
 
-                    <?php if ($errorsMessage !== []): ?>
-                        <ul>
-                            <?php foreach ($errorsMessage as $errorMessage): ?>
-                                <li><?= e($errorMessage) ?></li>
+                            <div>
+                                <label for="category_id">Категория</label>
+                                <select id="category_id" name="category_id">
+                                    <option value="" disabled <?= $categoryId === '' ? 'selected' : '' ?>>
+                                        Выберите категорию
+                                    </option>
+                                   <?php foreach ($categories as $category): ?>
+        <option
+        value="<?= e((string) $category['id']) ?>"
+        <?= $categoryId === (string) $category['id'] ? 'selected' : '' ?>
+    >
+        <?= e($category['name']) ?>
+    </option>
+<?php endforeach; ?>
+
+
+
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="description">Описание</label>
+                                <textarea id="description" name="description"
+                                    placeholder="Подробно опишите суть проблемы..."><?= e($description) ?></textarea>
+                            </div>
+
+                            <button type="submit">Отправить заявку</button>
+                        </form>
+                    </section>
+
+                    <section class="cabinet-down">
+                        <h1>Мои заявки</h1>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Тема</th>
+                                    <th>Категория</th>
+                                    <th>Статус</th>
+                                    <th>Дата</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <?php foreach ($tickets as $ticket): ?>
+                                    <tr>
+                                        <td>
+                                            <a href="my-tickets.php?ticket_id=<?= e((string) $ticket['id']) ?>">
+                                                <?= e((string) $ticket['id']) ?>
+                                            </a>
+                                        </td>
+                                        <td><?= e($ticket['subject']) ?></td>
+                                        <td><?= e($ticket['category_name']) ?></td>
+                                        <td><?= e($ticket['status']) ?></td>
+                                        <td><?= e($ticket['created_at']) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </section>
+                </div>
+
+                <aside class="ticket-preview">
+                    <?php if ($selectedTicketError !== ''): ?>
+                        <p><?= e($selectedTicketError) ?></p>
+                    <?php elseif ($selectedTicket !== null): ?>
+                        <h1>Заявка #<?= e((string) $selectedTicket['id']) ?></h1>
+
+                        <p>Тема: <?= e($selectedTicket['subject']) ?></p>
+                        <p>Пользователь: <?= e($selectedTicket['user_name']) ?></p>
+                        <p>Категория: <?= e($selectedTicket['category_name']) ?></p>
+                        <p>Статус: <?= e($selectedTicket['status']) ?></p>
+                        <p>Дата: <?= e($selectedTicket['created_at']) ?></p>
+                        <p>Описание: <?= e($selectedTicket['description']) ?></p>
+
+                        <hr>
+                        <h2>Чат поддержки</h2>
+
+                        <?php if ($comments === []): ?>
+                            <p>Комментариев пока нет.</p>
+                        <?php else: ?>
+                            <?php foreach ($comments as $comment): ?>
+                                <?php
+                                $author = $comment['user_role'] === 'admin'
+                                    ? 'Служба поддержки'
+                                    : $comment['user_name'];
+                                ?>
+                                <div class="comment">
+                                    <div class="comment-header">
+                                        <p><?= e($author) ?></p>
+                                        <p><?= e($comment['created_at']) ?></p>
+                                    </div>
+
+                                    <p><?= e($comment['comment']) ?></p>
+                                </div>
                             <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
+                        <?php endif; ?>
 
-                    <form
-                        class="sentComment"
-                        method="post"
-                        action="my-tickets.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>"
-                    >
-                        <input type="hidden" name="form_type" value="add_comment">
-                        <input type="hidden" name="ticket_id" value="<?= e((string) $selectedTicket['id']) ?>">
-                        <textarea
-                            id="message"
-                            name="message"
-                            placeholder="Написать службе поддержки..."
-                        ><?= e($message) ?></textarea>
-                        <button type="submit">Отправить</button>
-                    </form>
-                <?php else: ?>
-                    <p>У вас пока нет заявок.</p>
-                <?php endif; ?>
-            </aside>
-        </div>
-    </main>
-</div>
+                        <?php if ($errorsMessage !== []): ?>
+                            <ul>
+                                <?php foreach ($errorsMessage as $errorMessage): ?>
+                                    <li><?= e($errorMessage) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+
+                        <form class="sentComment" method="post"
+                            action="my-tickets.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>">
+                            <input type="hidden" name="form_type" value="add_comment">
+                            <input type="hidden" name="ticket_id" value="<?= e((string) $selectedTicket['id']) ?>">
+                            <textarea id="message" name="message"
+                                placeholder="Написать службе поддержки..."><?= e($message) ?></textarea>
+                            <button type="submit">Отправить</button>
+                        </form>
+                    <?php else: ?>
+                        <p>У вас пока нет заявок.</p>
+                    <?php endif; ?>
+                </aside>
+            </div>
+        </main>
+    </div>
 </body>
+
 </html>
