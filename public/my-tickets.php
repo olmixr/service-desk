@@ -36,7 +36,16 @@ if ($formType === 'add_ticket') {
 
     if ($categoryId === '') {
         $errors[] = 'Выберите категорию.';
+    } elseif (
+        !is_string($categoryId)
+        || !ctype_digit($categoryId)
+        || (int) $categoryId < 1
+    ) {
+        $errors[] = 'Некорректная категория.';
+    } elseif (!in_array($categoryId, $categoryIds, true)) {
+        $errors[] = 'Выбранная категория не существует.';
     }
+
 
     if ($description === '') {
         $errors[] = 'Введите описание заявки.';
@@ -242,14 +251,11 @@ if ($formType === 'add_comment') {
                                     <option value="" disabled <?= $categoryId === '' ? 'selected' : '' ?>>
                                         Выберите категорию
                                     </option>
-                                   <?php foreach ($categories as $category): ?>
-        <option
-        value="<?= e((string) $category['id']) ?>"
-        <?= $categoryId === (string) $category['id'] ? 'selected' : '' ?>
-    >
-        <?= e($category['name']) ?>
-    </option>
-<?php endforeach; ?>
+                                    <?php foreach ($categories as $category): ?>
+                                        <option value="<?= e((string) $category['id']) ?>" <?= $categoryId === (string) $category['id'] ? 'selected' : '' ?>>
+                                            <?= e($category['name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
 
 
 
