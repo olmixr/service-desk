@@ -288,6 +288,11 @@ if ($formType === 'add_comment') {
                             </thead>
 
                             <tbody>
+                                <?php if ($tickets === []): ?>
+                                     <tr>
+                                         <td colspan="5">Заявок пока нет.</td>
+                                    </tr>
+                                <?php else: ?>    
                                 <?php foreach ($tickets as $ticket): ?>
                                     <tr>
                                         <td>
@@ -305,6 +310,7 @@ if ($formType === 'add_comment') {
                                         <td><?= e($ticket['created_at']) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
+                                <?php endif;?>
                             </tbody>
                         </table>
                     </section>
