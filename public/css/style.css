@@ -371,11 +371,30 @@ ul {
     gap: 10px; 
 }
 .comments-list {
-     height: 360px;
+    height: 360px;
     overflow-y: auto;
+
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    gap: 10px;
+
+    padding-right: 6px;
+}
+.comment {
+    max-width: 80%;
+    margin-bottom: 0;
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.comment-user {
+    align-self: flex-end;
+    background: #9abaee;
+}
+
+.comment-support {
+    align-self: flex-start;
+    background: #a38585;
 }
 
 .status {

@@ -268,7 +268,15 @@ if ($formType === 'add_comment') {
                     </tbody>
                 </table>
             </div>
+            <script>
+             window.addEventListener('load', function () {
+                const commentsList = document.querySelector('.comments-list');
 
+            if (commentsList !== null) {
+                  commentsList.scrollTop = commentsList.scrollHeight;
+            }
+         });
+        </script>
             <aside class="ticket-preview">
                 <!-- правая карточка завки -->
 
@@ -293,34 +301,41 @@ if ($formType === 'add_comment') {
 
                     <hr>
                     <h2>Чат поддержки</h2>
+                        <div class="comments-list">
+                            <?php if ($comments === []): ?>
+                                <p>Комментариев пока нет.</p>
+                            <?php else: ?>
+                                <?php foreach ($comments as $comment): ?>
+                                    <?php
+                                    $isSupport = $comment['user_role'] === 'admin';
 
-                    <?php if ($comments === []): ?>
-                        <p>Комментариев пока нет.</p>
-                    <?php else: ?>
-                        <?php foreach ($comments as $comment): ?>
-                            <?php
-                            $author = $comment['user_role'] === 'admin'
-                                ? 'Служба поддержки'
-                                : $comment['user_name'];
-                            ?>
-                            <div class="comment">
-                                <div class="comment-header">
-                                    <p><?= e($author) ?></p>
-                                    <p><?= e($comment['created_at']) ?></p>
-                                </div>
+                                    $author = $isSupport
+                                        ? 'Служба поддержки'
+                                        : $comment['user_name'];
 
-                                <p><?= e($comment['comment']) ?></p>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                                    $commentClass = $isSupport
+                                        ? 'comment-support'
+                                        : 'comment-user';
+                                    ?>
+                                    <div class="comment <?= e($commentClass) ?>">
+                                        <div class="comment-header">
+                                            <p><?= e($author) ?></p>
+                                            <p><?= e($comment['created_at']) ?></p>
+                                        </div>
+                                        <p><?= e($comment['comment']) ?></p>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                        <script>
+                            window.addEventListener('load', function () {
+                                const commentsList = document.querySelector('.comments-list');
 
-                    <?php if ($errorsMessage !== []): ?>
-                        <ul>
-                            <?php foreach ($errorsMessage as $errorMessage): ?>
-                                <li><?= e($errorMessage) ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
+                                if (commentsList !== null) {
+                                    commentsList.scrollTop = commentsList.scrollHeight;
+                                }
+                            });
+                        </script>
 
                     <form class="sentComment" method="post"
                         action="index.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>">
