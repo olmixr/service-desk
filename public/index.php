@@ -36,6 +36,7 @@ $errorsMessage = [];
 $message = '';
 $formType = $_POST['form_type'] ?? '';
 
+
 if ($formType === 'add_comment') {
     $rawTicketId = $_POST['ticket_id'] ?? '';
 } else {
@@ -108,28 +109,40 @@ function e(string $value): string
 }
 
 
-$id = $_GET['id'] ?? '';
+
 
 $allowedStatuses = ['new', 'in_progress', 'done', 'rejected'];
 
 $isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
 
 if ($formType === 'change_status' && $isAdmin) {
+    $ticketId = (int) ($_POST['ticket_id'] ?? 0);
     $status = $_POST['status'] ?? '';
 
-    if (in_array($status, $allowedStatuses, true)) {
-            $updateStatement = $pdo->prepare(    
+    if($ticketId > 0 && in_array($status, $allowedStatuses, true)){
+     $updateStatement = $pdo->prepare(    
+                'SELECT id FROM tickets WHERE id = :id');
+
+                 $updateStatement->execute([
+                'id' => $ticketId,
+            ]);
+
+      $existingTicket = $updateStatement->fetch();
+      
+     if($existingTicket !== false){
+          $updateStatement = $pdo->prepare(    
                 'UPDATE tickets SET status = :status WHERE id = :id'
             );
 
             $updateStatement->execute([
                 'status' => $status,
-                'id' => $id,
+                'id' => $ticketId,
             ]);
+     
+        header('Location: index.php?ticket_id=' . $ticketId);
+        exit;
     }
-
-    header('Location: index.php');
-    exit;
+    }
 }
 
 
@@ -225,8 +238,9 @@ if ($formType === 'add_comment') {
             <td><?= e($ticket['category_name']) ?></td>
 
             <td><?php if ($isAdmin): ?>
-    <form class="changeStatus" method="post" action="index.php?id=<?= e((string) $ticket['id']) ?>">
+    <form class="changeStatus" method="post" action="index.php">
         <input type="hidden" name="form_type" value="change_status">
+        <input type="hidden" name="ticket_id" value="<?= e((string) $ticket['id']) ?>">
     <select id="status" name="status">
         <?php foreach ($allowedStatuses as $status): ?>
             <option value="<?= e($status) ?>" <?= $ticket['status'] === $status ? 'selected' : '' ?>>
