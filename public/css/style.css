@@ -377,3 +377,31 @@ ul {
     flex-direction: column;
     justify-content: flex-end;
 }
+
+.status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.status.status-new {
+    background: #e8f1ff;
+    color: #1f6feb;
+}
+
+.status.status-in-progress {
+    background: #fff4cc;
+    color: #946200;
+}
+
+.status.status-done {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status.status-rejected {
+    background: #fee2e2;
+    color: #b91c1c;
+}

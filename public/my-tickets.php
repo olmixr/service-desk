@@ -2,6 +2,7 @@
 session_start();
 
 require_once __DIR__ . '/../config/database.php';
+$statusLabels = require __DIR__ . '/../config/statuses.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -296,7 +297,11 @@ if ($formType === 'add_comment') {
                                         </td>
                                         <td><?= e($ticket['subject']) ?></td>
                                         <td><?= e($ticket['category_name']) ?></td>
-                                        <td><?= e($ticket['status']) ?></td>
+                                        <td>
+                                            <span class="status status-<?= e(str_replace('_', '-', $ticket['status'])) ?>">
+                                                <?= e($statusLabels[$ticket['status']] ?? $ticket['status']) ?>
+                                            </span>
+                                        </td>
                                         <td><?= e($ticket['created_at']) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -314,7 +319,12 @@ if ($formType === 'add_comment') {
                         <p>Тема: <?= e($selectedTicket['subject']) ?></p>
                         <p>Пользователь: <?= e($selectedTicket['user_name']) ?></p>
                         <p>Категория: <?= e($selectedTicket['category_name']) ?></p>
-                        <p>Статус: <?= e($selectedTicket['status']) ?></p>
+                        <p>
+                            Статус:
+                            <span class="status status-<?= e(str_replace('_', '-', $selectedTicket['status'])) ?>">
+                                <?= e($statusLabels[$selectedTicket['status']] ?? $selectedTicket['status']) ?>
+                            </span>
+                        </p>
                         <p>Дата: <?= e($selectedTicket['created_at']) ?></p>
                         <p>Описание: <?= e($selectedTicket['description']) ?></p>
 

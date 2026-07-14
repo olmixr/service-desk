@@ -1,15 +1,19 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config/database.php';
-    if (!isset($_SESSION['user_id'])) {
+$statusLabels = require __DIR__ . '/../config/statuses.php';
+if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
-    if($_SESSION['user_role'] !== 'admin'){
-        header('Location: my-tickets.php');
-        exit;
-    }
+if ($_SESSION['user_role'] !== 'admin') {
+    header('Location: my-tickets.php');
+    exit;
+}
+
+
+
 
 $sql = "
     SELECT
@@ -111,7 +115,7 @@ function e(string $value): string
 
 
 
-$allowedStatuses = ['new', 'in_progress', 'done', 'rejected'];
+$allowedStatuses = array_keys($statusLabels);
 
 $isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
 
@@ -119,18 +123,19 @@ if ($formType === 'change_status' && $isAdmin) {
     $ticketId = (int) ($_POST['ticket_id'] ?? 0);
     $status = $_POST['status'] ?? '';
 
-    if($ticketId > 0 && in_array($status, $allowedStatuses, true)){
-     $updateStatement = $pdo->prepare(    
-                'SELECT id FROM tickets WHERE id = :id');
+    if ($ticketId > 0 && in_array($status, $allowedStatuses, true)) {
+        $updateStatement = $pdo->prepare(
+            'SELECT id FROM tickets WHERE id = :id'
+        );
 
-                 $updateStatement->execute([
-                'id' => $ticketId,
-            ]);
+        $updateStatement->execute([
+            'id' => $ticketId,
+        ]);
 
-      $existingTicket = $updateStatement->fetch();
-      
-     if($existingTicket !== false){
-          $updateStatement = $pdo->prepare(    
+        $existingTicket = $updateStatement->fetch();
+
+        if ($existingTicket !== false) {
+            $updateStatement = $pdo->prepare(
                 'UPDATE tickets SET status = :status WHERE id = :id'
             );
 
@@ -138,10 +143,10 @@ if ($formType === 'change_status' && $isAdmin) {
                 'status' => $status,
                 'id' => $ticketId,
             ]);
-     
-        header('Location: index.php?ticket_id=' . $ticketId);
-        exit;
-    }
+
+            header('Location: index.php?ticket_id=' . $ticketId);
+            exit;
+        }
     }
 }
 
@@ -180,92 +185,96 @@ if ($formType === 'add_comment') {
 
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <title>Service Desk</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<header class="topbar">
-    <div>
-        <strong>Service Desk</strong>
-        <?php if (isset($_SESSION['user_id'])): ?>
-            <span class="user-info">
-                <?= e($_SESSION['user_name']) ?> (<?= e($_SESSION['user_role']) ?>)
-            </span>
-        <?php endif; ?>
-    </div>
+    <header class="topbar">
+        <div>
+            <strong>Service Desk</strong>
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <span class="user-info">
+                    <?= e($_SESSION['user_name']) ?> (<?= e($_SESSION['user_role']) ?>)
+                </span>
+            <?php endif; ?>
+        </div>
 
-    <nav class="nav-links">
-        <a href="index.php">Все заявки</a>
-        <a href="my-tickets.php">Мои заявки</a>
-        
-        <?php if (isset($_SESSION['user_id'])): ?>
-            <a href="logout.php">Выйти</a>
-        <?php else: ?>
-            <a href="login.php">Войти</a>
-        <?php endif; ?>
-    </nav>
-</header>
-<main class="dashboard-content">
-<div class="admin-grid">
-<div class="cabinet-down">
-<h1>Все заявки</h1>
+        <nav class="nav-links">
+            <a href="index.php">Все заявки</a>
+            <a href="my-tickets.php">Мои заявки</a>
 
-<table>
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Тема</th>
-        <th>Пользователь</th>
-        <th>Категория</th>
-        <th>Статус</th>
-        <th>Дата</th>
-    </tr>
-    </thead>
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <a href="logout.php">Выйти</a>
+            <?php else: ?>
+                <a href="login.php">Войти</a>
+            <?php endif; ?>
+        </nav>
+    </header>
+    <main class="dashboard-content">
+        <div class="admin-grid">
+            <div class="cabinet-down">
+                <h1>Все заявки</h1>
 
-    <tbody>
-    <?php foreach ($tickets as $ticket): ?>
-        <tr>
-        <td>
-             <a href="index.php?ticket_id=<?= e((string) $ticket['id']) ?>">
-             <?= e((string) $ticket['id']) ?>
-                </a>
-        </td>
-            <td><?= e($ticket['subject']) ?></td>
-            <td><?= e($ticket['user_name']) ?></td>
-            <td><?= e($ticket['category_name']) ?></td>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Тема</th>
+                            <th>Пользователь</th>
+                            <th>Категория</th>
+                            <th>Статус</th>
+                            <th>Дата</th>
+                        </tr>
+                    </thead>
 
-            <td><?php if ($isAdmin): ?>
-    <form class="changeStatus" method="post" action="index.php">
-        <input type="hidden" name="form_type" value="change_status">
-        <input type="hidden" name="ticket_id" value="<?= e((string) $ticket['id']) ?>">
-    <select id="status" name="status">
-        <?php foreach ($allowedStatuses as $status): ?>
-            <option value="<?= e($status) ?>" <?= $ticket['status'] === $status ? 'selected' : '' ?>>
-                <?= e($status) ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
+                    <tbody>
+                        <?php foreach ($tickets as $ticket): ?>
+                            <tr>
+                                <td>
+                                    <a href="index.php?ticket_id=<?= e((string) $ticket['id']) ?>">
+                                        <?= e((string) $ticket['id']) ?>
+                                    </a>
+                                </td>
+                                <td><?= e($ticket['subject']) ?></td>
+                                <td><?= e($ticket['user_name']) ?></td>
+                                <td><?= e($ticket['category_name']) ?></td>
 
-    <button type="submit">Сохранить</button>
-</form>
-<?php endif; ?></td> 
+                                <td><?php if ($isAdmin): ?>
+                                        <form class="changeStatus" method="post" action="index.php">
+                                            <input type="hidden" name="form_type" value="change_status">
+                                            <input type="hidden" name="ticket_id" value="<?= e((string) $ticket['id']) ?>">
+                                            <select name="status"
+                                                class="status status-<?= e(str_replace('_', '-', $ticket['status'])) ?>">
+                                                <?php foreach ($allowedStatuses as $status): ?>
+                                                    <option value="<?= e($status) ?>" <?= $ticket['status'] === $status ? 'selected' : '' ?>>
+                                                        <?= e($statusLabels[$status]) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
 
-            <td><?= e($ticket['created_at']) ?></td>
-        </tr>
-    <?php endforeach; ?>
-    </tbody>
-</table>
-</div>
+                                            <button type="submit">Сохранить</button>
+                                        </form>
+                                    <?php endif; ?>
+                                </td>
 
-                <aside class="ticket-preview">
-                    <!-- правая карточка завки -->
+                                <td><?= e($ticket['created_at']) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <aside class="ticket-preview">
+                <!-- правая карточка завки -->
 
 
-                
- <?php if ($selectedTicketError !== ''): ?>
+
+                <?php if ($selectedTicketError !== ''): ?>
                     <p><?= e($selectedTicketError) ?></p>
                 <?php elseif ($selectedTicket !== null): ?>
                     <h1>Заявка #<?= e((string) $selectedTicket['id']) ?></h1>
@@ -273,7 +282,12 @@ if ($formType === 'add_comment') {
                     <p>Тема: <?= e($selectedTicket['subject']) ?></p>
                     <p>Пользователь: <?= e($selectedTicket['user_name']) ?></p>
                     <p>Категория: <?= e($selectedTicket['category_name']) ?></p>
-                    <p>Статус: <?= e($selectedTicket['status']) ?></p>
+                    <p>
+                        Статус:
+                        <span class="status status-<?= e(str_replace('_', '-', $selectedTicket['status'])) ?>">
+                            <?= e($statusLabels[$selectedTicket['status']] ?? $selectedTicket['status']) ?>
+                        </span>
+                    </p>
                     <p>Дата: <?= e($selectedTicket['created_at']) ?></p>
                     <p>Описание: <?= e($selectedTicket['description']) ?></p>
 
@@ -308,28 +322,23 @@ if ($formType === 'add_comment') {
                         </ul>
                     <?php endif; ?>
 
-                    <form
-                        class="sentComment"
-                        method="post"
-                        action="index.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>"
-                    >
+                    <form class="sentComment" method="post"
+                        action="index.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>">
                         <input type="hidden" name="form_type" value="add_comment">
                         <input type="hidden" name="ticket_id" value="<?= e((string) $selectedTicket['id']) ?>">
-                        <textarea
-                            id="message"
-                            name="message"
-                            placeholder="Написать службе поддержки..."
-                        ><?= e($message) ?></textarea>
+                        <textarea id="message" name="message"
+                            placeholder="Написать службе поддержки..."><?= e($message) ?></textarea>
                         <button type="submit">Отправить</button>
                     </form>
                 <?php else: ?>
                     <p>Заявок пока нет.</p>
                 <?php endif; ?>
             </aside>
-</div>
-</main>
+        </div>
+    </main>
 
 
 
 </body>
+
 </html>
