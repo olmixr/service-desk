@@ -12,6 +12,38 @@ if ($_SESSION['user_role'] !== 'admin') {
     exit;
 }
 
+$categories = $pdo->query('SELECT id, name FROM categories ORDER BY name')->fetchAll();
+$categoryIds = array_map('strval', array_column($categories, 'id'));
+$allowedStatuses = array_keys($statusLabels);
+
+$filterCategoryId = $_GET['category_id'] ?? '';
+$filterStatus = $_GET['status'] ?? '';
+$filterErrors = [];
+
+if ($filterCategoryId !== '') {
+    if (
+        !is_string($filterCategoryId)
+        || !ctype_digit($filterCategoryId)
+        || (int) $filterCategoryId < 1
+    ) {
+        $filterErrors[] = 'Некорректная категория фильтра.';
+        $filterCategoryId = '';
+    } elseif (!in_array($filterCategoryId, $categoryIds, true)) {
+        $filterErrors[] = 'Категория фильтра не существует.';
+        $filterCategoryId = '';
+    }
+}
+
+if ($filterStatus !== '') {
+    if (
+        !is_string($filterStatus)
+        || !in_array($filterStatus, $allowedStatuses, true)
+    ) {
+        $filterErrors[] = 'Некорректный статус фильтра.';
+        $filterStatus = '';
+    }
+}
+
 
 
 
@@ -27,10 +59,25 @@ $sql = "
     FROM tickets
     INNER JOIN users ON tickets.user_id = users.id
     INNER JOIN categories ON tickets.category_id = categories.id
-    ORDER BY tickets.created_at DESC
+    WHERE 1 = 1
 ";
 
-$statement = $pdo->query($sql);
+$sqlParams = [];
+
+if ($filterCategoryId !== '') {
+    $sql .= " AND tickets.category_id = :category_id";
+    $sqlParams['category_id'] = (int) $filterCategoryId;
+}
+
+if ($filterStatus !== '') {
+    $sql .= " AND tickets.status = :status";
+    $sqlParams['status'] = $filterStatus;
+}
+
+$sql .= " ORDER BY tickets.created_at DESC, tickets.id DESC";
+
+$statement = $pdo->prepare($sql);
+$statement->execute($sqlParams);
 $tickets = $statement->fetchAll();
 $selectedTicket = null;
 $selectedTicketError = '';
@@ -115,8 +162,6 @@ function e(string $value): string
 
 
 
-$allowedStatuses = array_keys($statusLabels);
-
 $isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
 
 if ($formType === 'change_status' && $isAdmin) {
@@ -144,7 +189,19 @@ if ($formType === 'change_status' && $isAdmin) {
                 'id' => $ticketId,
             ]);
 
-            header('Location: index.php?ticket_id=' . $ticketId);
+            $redirectQuery = [
+                'ticket_id' => $ticketId,
+            ];
+
+            if ($filterCategoryId !== '') {
+                $redirectQuery['category_id'] = $filterCategoryId;
+            }
+
+            if ($filterStatus !== '') {
+                $redirectQuery['status'] = $filterStatus;
+            }
+
+            header('Location: index.php?' . http_build_query($redirectQuery));
             exit;
         }
     }
@@ -175,7 +232,19 @@ if ($formType === 'add_comment') {
             'comment' => $message,
         ]);
 
-        header('Location: index.php?ticket_id=' . $selectedTicket['id']);
+        $redirectQuery = [
+            'ticket_id' => $selectedTicket['id'],
+        ];
+
+        if ($filterCategoryId !== '') {
+            $redirectQuery['category_id'] = $filterCategoryId;
+        }
+
+        if ($filterStatus !== '') {
+            $redirectQuery['status'] = $filterStatus;
+        }
+
+        header('Location: index.php?' . http_build_query($redirectQuery));
         exit;
     }
 }
@@ -218,7 +287,50 @@ if ($formType === 'add_comment') {
     <main class="dashboard-content">
         <div class="admin-grid">
             <div class="cabinet-down">
-                <h1>Все заявки</h1>
+                <div class="tickets-toolbar">
+                    <h1>Все заявки</h1>
+
+                    <form class="ticket-filters" method="get" action="index.php">
+                        <label class="visually-hidden" for="filter_status">Статус</label>
+
+                        <select id="filter_status" name="status">
+                            <option value="" <?= $filterStatus === '' ? 'selected' : '' ?>>
+                                Все статусы
+                            </option>
+
+                            <?php foreach ($statusLabels as $statusValue => $statusLabel): ?>
+                                <option value="<?= e($statusValue) ?>" <?= $filterStatus === $statusValue ? 'selected' : '' ?>>
+                                    <?= e($statusLabel) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <label class="visually-hidden" for="filter_category_id">Категория</label>
+
+                        <select id="filter_category_id" name="category_id">
+                            <option value="" <?= $filterCategoryId === '' ? 'selected' : '' ?>>
+                                Все категории
+                            </option>
+
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?= e((string) $category['id']) ?>" <?= $filterCategoryId === (string) $category['id'] ? 'selected' : '' ?>>
+                                    <?= e($category['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <button type="submit">Применить</button>
+                        <a class="filter-reset" href="index.php">Сбросить</a>
+                    </form>
+                </div>
+
+                <?php if ($filterErrors !== []): ?>
+                    <ul>
+                        <?php foreach ($filterErrors as $filterError): ?>
+                            <li><?= e($filterError) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
 
                 <table>
                     <thead>
@@ -233,38 +345,59 @@ if ($formType === 'add_comment') {
                     </thead>
 
                     <tbody>
-                        <?php foreach ($tickets as $ticket): ?>
+                        <?php if ($tickets === []): ?>
                             <tr>
-                                <td>
-                                    <a href="index.php?ticket_id=<?= e((string) $ticket['id']) ?>">
-                                        <?= e((string) $ticket['id']) ?>
-                                    </a>
-                                </td>
-                                <td><?= e($ticket['subject']) ?></td>
-                                <td><?= e($ticket['user_name']) ?></td>
-                                <td><?= e($ticket['category_name']) ?></td>
-
-                                <td><?php if ($isAdmin): ?>
-                                        <form class="changeStatus" method="post" action="index.php">
-                                            <input type="hidden" name="form_type" value="change_status">
-                                            <input type="hidden" name="ticket_id" value="<?= e((string) $ticket['id']) ?>">
-                                            <select name="status"
-                                                class="status status-<?= e(str_replace('_', '-', $ticket['status'])) ?>">
-                                                <?php foreach ($allowedStatuses as $status): ?>
-                                                    <option value="<?= e($status) ?>" <?= $ticket['status'] === $status ? 'selected' : '' ?>>
-                                                        <?= e($statusLabels[$status]) ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-
-                                            <button type="submit">Сохранить</button>
-                                        </form>
-                                    <?php endif; ?>
-                                </td>
-
-                                <td><?= e($ticket['created_at']) ?></td>
+                                <td colspan="6">Заявок по выбранным фильтрам нет.</td>
                             </tr>
-                        <?php endforeach; ?>
+                        <?php else: ?>
+                            <?php foreach ($tickets as $ticket): ?>
+                                <?php
+                                $ticketQuery = [
+                                    'ticket_id' => $ticket['id'],
+                                ];
+
+                                if ($filterCategoryId !== '') {
+                                    $ticketQuery['category_id'] = $filterCategoryId;
+                                }
+
+                                if ($filterStatus !== '') {
+                                    $ticketQuery['status'] = $filterStatus;
+                                }
+                                ?>
+
+                                <tr>
+                                    <td>
+                                        <a href="<?= e('index.php?' . http_build_query($ticketQuery)) ?>">
+                                            <?= e((string) $ticket['id']) ?>
+                                        </a>
+                                    </td>
+                                    <td><?= e($ticket['subject']) ?></td>
+                                    <td><?= e($ticket['user_name']) ?></td>
+                                    <td><?= e($ticket['category_name']) ?></td>
+
+                                    <td><?php if ($isAdmin): ?>
+                                            <form class="changeStatus" method="post"
+                                                action="<?= e('index.php?' . http_build_query($ticketQuery)) ?>">
+                                                <input type="hidden" name="form_type" value="change_status">
+                                                <input type="hidden" name="ticket_id" value="<?= e((string) $ticket['id']) ?>">
+                                                <select name="status"
+                                                    class="status status-<?= e(str_replace('_', '-', $ticket['status'])) ?>">
+                                                    <?php foreach ($allowedStatuses as $status): ?>
+                                                        <option value="<?= e($status) ?>" <?= $ticket['status'] === $status ? 'selected' : '' ?>>
+                                                            <?= e($statusLabels[$status]) ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+
+                                                <button type="submit">Сохранить</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </td>
+
+                                    <td><?= e($ticket['created_at']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -337,8 +470,22 @@ if ($formType === 'add_comment') {
                             });
                         </script>
 
+                    <?php
+                    $commentQuery = [
+                        'ticket_id' => $selectedTicket['id'],
+                    ];
+
+                    if ($filterCategoryId !== '') {
+                        $commentQuery['category_id'] = $filterCategoryId;
+                    }
+
+                    if ($filterStatus !== '') {
+                        $commentQuery['status'] = $filterStatus;
+                    }
+                    ?>
+
                     <form class="sentComment" method="post"
-                        action="index.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>">
+                        action="<?= e('index.php?' . http_build_query($commentQuery)) ?>">
                         <input type="hidden" name="form_type" value="add_comment">
                         <input type="hidden" name="ticket_id" value="<?= e((string) $selectedTicket['id']) ?>">
                         <textarea id="message" name="message"

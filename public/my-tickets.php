@@ -26,6 +26,36 @@ $formType = $_POST['form_type'] ?? '';
 $categories = $pdo->query('SELECT id , name FROM categories ORDER BY name')->fetchAll();
 $categoryIds = array_map('strval', array_column($categories, 'id'));
 
+$filterCategoryId = $_GET['category_id'] ?? '';
+$filterStatus = $_GET['status'] ?? '';
+
+$filterErrors = [];
+$allowedStatuses = array_keys($statusLabels);
+
+if ($filterCategoryId !== '') {
+    if (
+        !is_string($filterCategoryId)
+        || !ctype_digit($filterCategoryId)
+        || (int) $filterCategoryId < 1
+    ) {
+        $filterErrors[] = 'Некорректная категория фильтра.';
+        $filterCategoryId = '';
+    } elseif (!in_array($filterCategoryId, $categoryIds, true)) {
+        $filterErrors[] = 'Категория фильтра не существует.';
+        $filterCategoryId = '';
+    }
+}
+
+if ($filterStatus !== '') {
+    if (
+        !is_string($filterStatus)
+        || !in_array($filterStatus, $allowedStatuses, true)
+    ) {
+        $filterErrors[] = 'Некорректный статус фильтра.';
+        $filterStatus = '';
+    }
+}
+
 if ($formType === 'add_ticket') {
     $subject = trim($_POST['subject'] ?? '');
     $categoryId = $_POST['category_id'] ?? '';
@@ -83,15 +113,30 @@ $sql = "
     INNER JOIN users ON tickets.user_id = users.id
     INNER JOIN categories ON tickets.category_id = categories.id
     WHERE tickets.user_id = :user_id
-    ORDER BY tickets.created_at DESC
 ";
 
-$statement = $pdo->prepare($sql);
-$statement->execute([
+$sqlParams = [
     'user_id' => $_SESSION['user_id'],
-]);
+];
+
+if ($filterCategoryId !== '') {
+    $sql .= " AND tickets.category_id = :category_id";
+    $sqlParams['category_id'] = (int) $filterCategoryId;
+}
+if ($filterStatus !== '') {
+    $sql .= " AND tickets.status = :status";
+    $sqlParams['status'] = $filterStatus;
+}
+
+$sql .= " ORDER BY tickets.created_at DESC, tickets.id DESC";
+
+$statement = $pdo->prepare($sql);
+$statement->execute($sqlParams);
 
 $tickets = $statement->fetchAll();
+
+
+
 $selectedTicket = null;
 $selectedTicketError = '';
 $selectedTicketId = 0;
@@ -274,29 +319,85 @@ if ($formType === 'add_comment') {
                     </section>
 
                     <section class="cabinet-down">
+                    <div class="tickets-toolbar">
                         <h1>Мои заявки</h1>
 
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Тема</th>
-                                    <th>Категория</th>
-                                    <th>Статус</th>
-                                    <th>Дата</th>
-                                </tr>
-                            </thead>
+                        <form class="ticket-filters" method="get" action="my-tickets.php">
+                            <label class="visually-hidden" for="filter_status">Статус</label>
 
-                            <tbody>
-                                <?php if ($tickets === []): ?>
-                                     <tr>
-                                         <td colspan="5">Заявок пока нет.</td>
-                                    </tr>
-                                <?php else: ?>    
+                            <select id="filter_status" name="status">
+                                <option value="" <?= $filterStatus === '' ? 'selected' : '' ?>>
+                                    Все статусы
+                                </option>
+
+                                <?php foreach ($statusLabels as $statusValue => $statusLabel): ?>
+                                    <option value="<?= e($statusValue) ?>" <?= $filterStatus === $statusValue ? 'selected' : '' ?>>
+                                        <?= e($statusLabel) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <label class="visually-hidden" for="filter_category_id">Категория</label>
+
+                            <select id="filter_category_id" name="category_id">
+                                <option value="" <?= $filterCategoryId === '' ? 'selected' : '' ?>>
+                                    Все категории
+                                </option>
+
+                                <?php foreach ($categories as $category): ?>
+                                    <option value="<?= e((string) $category['id']) ?>" <?= $filterCategoryId === (string) $category['id'] ? 'selected' : '' ?>>
+                                        <?= e($category['name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <button type="submit">Применить</button>
+                            <a class="filter-reset" href="my-tickets.php">Сбросить</a>
+                        </form>
+                    </div>
+
+                    <?php if ($filterErrors !== []): ?>
+                        <ul>
+                            <?php foreach ($filterErrors as $filterError): ?>
+                                <li><?= e($filterError) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Тема</th>
+                                <th>Категория</th>
+                                <th>Статус</th>
+                                <th>Дата</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <?php if ($tickets === []): ?>
+                                <tr>
+                                    <td colspan="5">Заявок пока нет.</td>
+                                </tr>
+                            <?php else: ?>
                                 <?php foreach ($tickets as $ticket): ?>
+                                    <?php
+                                    $ticketQuery = [
+                                        'ticket_id' => $ticket['id'],
+                                    ];
+
+                                    if ($filterCategoryId !== '') {
+                                        $ticketQuery['category_id'] = $filterCategoryId;
+                                    }
+                                    if ($filterStatus !== '') {
+                                        $ticketQuery['status'] = $filterStatus;
+                                    }
+                                    ?>
+
                                     <tr>
                                         <td>
-                                            <a href="my-tickets.php?ticket_id=<?= e((string) $ticket['id']) ?>">
+                                            <a href="<?= e('my-tickets.php?' . http_build_query($ticketQuery)) ?>">
                                                 <?= e((string) $ticket['id']) ?>
                                             </a>
                                         </td>
@@ -310,9 +411,9 @@ if ($formType === 'add_comment') {
                                         <td><?= e($ticket['created_at']) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
-                                <?php endif;?>
-                            </tbody>
-                        </table>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                     </section>
                 </div>
 
