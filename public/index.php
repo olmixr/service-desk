@@ -44,8 +44,49 @@ if ($filterStatus !== '') {
     }
 }
 
+$perPage = 6;
+$rawPage = $_GET['page'] ?? '1';
+
+if (
+    !is_string($rawPage)
+    || !ctype_digit($rawPage)
+    || (int) $rawPage < 1
+) {
+    $filterErrors[] = 'Некорректный номер страницы.';
+    $page = 1;
+} else {
+    $page = (int) $rawPage;
+}
 
 
+
+
+$whereSql = " WHERE 1 = 1";
+$sqlParams = [];
+
+if ($filterCategoryId !== '') {
+    $whereSql .= " AND tickets.category_id = :category_id";
+    $sqlParams['category_id'] = (int) $filterCategoryId;
+}
+
+if ($filterStatus !== '') {
+    $whereSql .= " AND tickets.status = :status";
+    $sqlParams['status'] = $filterStatus;
+}
+
+$countStatement = $pdo->prepare(
+    'SELECT COUNT(*) FROM tickets' . $whereSql
+);
+$countStatement->execute($sqlParams);
+
+$totalTickets = (int) $countStatement->fetchColumn();
+$totalPages = max(1, (int) ceil($totalTickets / $perPage));
+
+if ($page > $totalPages) {
+    $page = $totalPages;
+}
+
+$offset = ($page - 1) * $perPage;
 
 $sql = "
     SELECT
@@ -59,25 +100,24 @@ $sql = "
     FROM tickets
     INNER JOIN users ON tickets.user_id = users.id
     INNER JOIN categories ON tickets.category_id = categories.id
-    WHERE 1 = 1
+" . $whereSql . "
+    ORDER BY tickets.created_at DESC, tickets.id DESC
+    LIMIT :limit OFFSET :offset
 ";
 
-$sqlParams = [];
-
-if ($filterCategoryId !== '') {
-    $sql .= " AND tickets.category_id = :category_id";
-    $sqlParams['category_id'] = (int) $filterCategoryId;
-}
-
-if ($filterStatus !== '') {
-    $sql .= " AND tickets.status = :status";
-    $sqlParams['status'] = $filterStatus;
-}
-
-$sql .= " ORDER BY tickets.created_at DESC, tickets.id DESC";
-
 $statement = $pdo->prepare($sql);
-$statement->execute($sqlParams);
+
+foreach ($sqlParams as $paramName => $paramValue) {
+    $statement->bindValue(
+        ':' . $paramName,
+        $paramValue,
+        is_int($paramValue) ? PDO::PARAM_INT : PDO::PARAM_STR
+    );
+}
+
+$statement->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+$statement->execute();
 $tickets = $statement->fetchAll();
 $selectedTicket = null;
 $selectedTicketError = '';
@@ -191,6 +231,7 @@ if ($formType === 'change_status' && $isAdmin) {
 
             $redirectQuery = [
                 'ticket_id' => $ticketId,
+                'page' => $page,
             ];
 
             if ($filterCategoryId !== '') {
@@ -234,6 +275,7 @@ if ($formType === 'add_comment') {
 
         $redirectQuery = [
             'ticket_id' => $selectedTicket['id'],
+            'page' => $page,
         ];
 
         if ($filterCategoryId !== '') {
@@ -354,6 +396,7 @@ if ($formType === 'add_comment') {
                                 <?php
                                 $ticketQuery = [
                                     'ticket_id' => $ticket['id'],
+                                    'page' => $page,
                                 ];
 
                                 if ($filterCategoryId !== '') {
@@ -400,6 +443,34 @@ if ($formType === 'add_comment') {
                         <?php endif; ?>
                     </tbody>
                 </table>
+
+                <?php if ($totalPages > 1): ?>
+                    <nav class="pagination" aria-label="Страницы заявок">
+                        <?php for ($pageNumber = 1; $pageNumber <= $totalPages; $pageNumber++): ?>
+                            <?php
+                            $pageQuery = [
+                                'page' => $pageNumber,
+                            ];
+
+                            if ($filterCategoryId !== '') {
+                                $pageQuery['category_id'] = $filterCategoryId;
+                            }
+
+                            if ($filterStatus !== '') {
+                                $pageQuery['status'] = $filterStatus;
+                            }
+                            ?>
+
+                            <a
+                                class="pagination-link<?= $pageNumber === $page ? ' active' : '' ?>"
+                                href="<?= e('index.php?' . http_build_query($pageQuery)) ?>"
+                                <?= $pageNumber === $page ? 'aria-current="page"' : '' ?>
+                            >
+                                <?= e((string) $pageNumber) ?>
+                            </a>
+                        <?php endfor; ?>
+                    </nav>
+                <?php endif; ?>
             </div>
             <script>
              window.addEventListener('load', function () {
@@ -473,6 +544,7 @@ if ($formType === 'add_comment') {
                     <?php
                     $commentQuery = [
                         'ticket_id' => $selectedTicket['id'],
+                        'page' => $page,
                     ];
 
                     if ($filterCategoryId !== '') {

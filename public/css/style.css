@@ -472,6 +472,35 @@ ul {
     border: 0;
 }
 
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.pagination-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #cfd8e6;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1f6feb;
+    font-weight: 700;
+}
+
+.pagination-link:hover,
+.pagination-link.active {
+    border-color: #1f6feb;
+    background: #1f6feb;
+    color: #ffffff;
+    text-decoration: none;
+}
+
 @media (max-width: 900px) {
     .tickets-toolbar {
         align-items: flex-start;

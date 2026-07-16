@@ -56,6 +56,20 @@ if ($filterStatus !== '') {
     }
 }
 
+$perPage = 6;
+$rawPage = $_GET['page'] ?? '1';
+
+if (
+    !is_string($rawPage)
+    || !ctype_digit($rawPage)
+    || (int) $rawPage < 1
+) {
+    $filterErrors[] = 'Некорректный номер страницы.';
+    $page = 1;
+} else {
+    $page = (int) $rawPage;
+}
+
 if ($formType === 'add_ticket') {
     $subject = trim($_POST['subject'] ?? '');
     $categoryId = $_POST['category_id'] ?? '';
@@ -100,6 +114,35 @@ if ($formType === 'add_ticket') {
     }
 }
 
+$whereSql = " WHERE tickets.user_id = :user_id";
+$sqlParams = [
+    'user_id' => (int) $_SESSION['user_id'],
+];
+
+if ($filterCategoryId !== '') {
+    $whereSql .= " AND tickets.category_id = :category_id";
+    $sqlParams['category_id'] = (int) $filterCategoryId;
+}
+
+if ($filterStatus !== '') {
+    $whereSql .= " AND tickets.status = :status";
+    $sqlParams['status'] = $filterStatus;
+}
+
+$countStatement = $pdo->prepare(
+    'SELECT COUNT(*) FROM tickets' . $whereSql
+);
+$countStatement->execute($sqlParams);
+
+$totalTickets = (int) $countStatement->fetchColumn();
+$totalPages = max(1, (int) ceil($totalTickets / $perPage));
+
+if ($page > $totalPages) {
+    $page = $totalPages;
+}
+
+$offset = ($page - 1) * $perPage;
+
 $sql = "
     SELECT
         tickets.id,
@@ -112,26 +155,24 @@ $sql = "
     FROM tickets
     INNER JOIN users ON tickets.user_id = users.id
     INNER JOIN categories ON tickets.category_id = categories.id
-    WHERE tickets.user_id = :user_id
+" . $whereSql . "
+    ORDER BY tickets.created_at DESC, tickets.id DESC
+    LIMIT :limit OFFSET :offset
 ";
 
-$sqlParams = [
-    'user_id' => $_SESSION['user_id'],
-];
-
-if ($filterCategoryId !== '') {
-    $sql .= " AND tickets.category_id = :category_id";
-    $sqlParams['category_id'] = (int) $filterCategoryId;
-}
-if ($filterStatus !== '') {
-    $sql .= " AND tickets.status = :status";
-    $sqlParams['status'] = $filterStatus;
-}
-
-$sql .= " ORDER BY tickets.created_at DESC, tickets.id DESC";
-
 $statement = $pdo->prepare($sql);
-$statement->execute($sqlParams);
+
+foreach ($sqlParams as $paramName => $paramValue) {
+    $statement->bindValue(
+        ':' . $paramName,
+        $paramValue,
+        is_int($paramValue) ? PDO::PARAM_INT : PDO::PARAM_STR
+    );
+}
+
+$statement->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+$statement->execute();
 
 $tickets = $statement->fetchAll();
 
@@ -233,7 +274,20 @@ if ($formType === 'add_comment') {
             'comment' => $message,
         ]);
 
-        header('Location: my-tickets.php?ticket_id=' . $selectedTicket['id']);
+        $redirectQuery = [
+            'ticket_id' => $selectedTicket['id'],
+            'page' => $page,
+        ];
+
+        if ($filterCategoryId !== '') {
+            $redirectQuery['category_id'] = $filterCategoryId;
+        }
+
+        if ($filterStatus !== '') {
+            $redirectQuery['status'] = $filterStatus;
+        }
+
+        header('Location: my-tickets.php?' . http_build_query($redirectQuery));
         exit;
     }
 }
@@ -385,6 +439,7 @@ if ($formType === 'add_comment') {
                                     <?php
                                     $ticketQuery = [
                                         'ticket_id' => $ticket['id'],
+                                        'page' => $page,
                                     ];
 
                                     if ($filterCategoryId !== '') {
@@ -414,6 +469,34 @@ if ($formType === 'add_comment') {
                             <?php endif; ?>
                         </tbody>
                     </table>
+
+                    <?php if ($totalPages > 1): ?>
+                        <nav class="pagination" aria-label="Страницы заявок">
+                            <?php for ($pageNumber = 1; $pageNumber <= $totalPages; $pageNumber++): ?>
+                                <?php
+                                $pageQuery = [
+                                    'page' => $pageNumber,
+                                ];
+
+                                if ($filterCategoryId !== '') {
+                                    $pageQuery['category_id'] = $filterCategoryId;
+                                }
+
+                                if ($filterStatus !== '') {
+                                    $pageQuery['status'] = $filterStatus;
+                                }
+                                ?>
+
+                                <a
+                                    class="pagination-link<?= $pageNumber === $page ? ' active' : '' ?>"
+                                    href="<?= e('my-tickets.php?' . http_build_query($pageQuery)) ?>"
+                                    <?= $pageNumber === $page ? 'aria-current="page"' : '' ?>
+                                >
+                                    <?= e((string) $pageNumber) ?>
+                                </a>
+                            <?php endfor; ?>
+                        </nav>
+                    <?php endif; ?>
                     </section>
                 </div>
 
@@ -479,8 +562,24 @@ if ($formType === 'add_comment') {
                                 <?php endforeach; ?>
                             </ul>
                         <?php endif; ?>
+
+                        <?php
+                        $commentQuery = [
+                            'ticket_id' => $selectedTicket['id'],
+                            'page' => $page,
+                        ];
+
+                        if ($filterCategoryId !== '') {
+                            $commentQuery['category_id'] = $filterCategoryId;
+                        }
+
+                        if ($filterStatus !== '') {
+                            $commentQuery['status'] = $filterStatus;
+                        }
+                        ?>
+
                         <form class="sentComment" method="post"
-                            action="my-tickets.php?ticket_id=<?= e((string) $selectedTicket['id']) ?>">
+                            action="<?= e('my-tickets.php?' . http_build_query($commentQuery)) ?>">
                             <input type="hidden" name="form_type" value="add_comment">
                             <input type="hidden" name="ticket_id" value="<?= e((string) $selectedTicket['id']) ?>">
                             <textarea id="message" name="message"
