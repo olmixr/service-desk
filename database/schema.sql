@@ -89,6 +89,15 @@ CREATE TABLE IF NOT EXISTS ticket_comments (
     FOREIGN KEY (ticket_id) REFERENCES tickets(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
-INSERT INTO ticket_comments (ticket_id, user_id, comment)
-VALUES (14, 2, 'Тестовый комментарий');
+
+DELETE c1
+FROM categories c1
+INNER JOIN categories c2
+    ON c1.name = c2.name
+    AND c1.id > c2.id;
+    
+ALTER TABLE categories
+ADD CONSTRAINT uq_categories_name UNIQUE (name);
+
+
 
