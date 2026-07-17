@@ -4,10 +4,10 @@ Service Desk is a web application for creating, managing, and discussing support
 
 The project was built with plain PHP and MySQL as an internship and learning project. It demonstrates authentication, role-based access, database relationships, filtering, pagination, and secure database queries with PDO.
 ## img
-<img src="image.png" width="700"><p>Admin page</p>
-<img src="image-1.png" width="700"><p>User page</p>
-<img src="image-2.png" width="500"><p>Login page</p>
-<img src="image-4.png" width="500"><p>Registration page</p>
+<img src="public/img/image.png" width="700"><p>Admin page</p>
+<img src="public/img/image-1.png" width="700"><p>User page</p>
+<img src="public/img/image-2.png" width="500"><p>Login page</p>
+<img src="public/img/image-4.png" width="500"><p>Registration page</p>
 
 ## Features
 
